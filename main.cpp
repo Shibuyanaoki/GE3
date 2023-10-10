@@ -7,8 +7,6 @@
 #include <DirectXMath.h>
 #include <DirectXTex.h>
 #include <d3dcompiler.h>
-#define DIRECTINPUT_VERSION     0x0800   // DirectInputのバージョン指定
-#include <dinput.h>
 #include <wrl.h>
 
 #include "Input.h"
@@ -16,8 +14,6 @@
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "d3dcompiler.lib")
-#pragma comment(lib, "dinput8.lib")
-#pragma comment(lib, "dxguid.lib")
 
 using namespace DirectX;
 using namespace Microsoft::WRL;
@@ -473,7 +469,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 #pragma endregion
 
     input_ = new Input();
-    input_->Initialize();
+    input_->Initialize(w.hInstance);
 
 #pragma region 描画初期化処理
 
