@@ -9,12 +9,14 @@
 
 #include <wrl.h>
 
+#include "WinApp.h"
+
 //using namespace Microsoft::WRL;
 
 class Input{
 public:	//メンバ関数
 	//初期化
-	void Initialize(HINSTANCE hInstance ,HWND hwnd);
+	void Initialize(WinApp * winApp);
 	//更新
 	void Update();
 	//任意のボタンを押したとき
@@ -23,6 +25,9 @@ public:	//メンバ関数
 	bool TriggerKey(BYTE keyNumber);
 
 private:
+
+	WinApp* winApp_ = nullptr;
+
 	// キーボードデバイスの生成
 	Microsoft::WRL::ComPtr<IDirectInputDevice8> keyboard;
 	// DirectInputの初期化
