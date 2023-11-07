@@ -1,11 +1,12 @@
 #include "Input.h"
 #include <assert.h>
+
 using namespace Microsoft::WRL;
 
 void Input::Initialize(WinApp* winApp)
 {
-
 	winApp_ = winApp;
+
 	HRESULT result;
 
 	result = DirectInput8Create(
