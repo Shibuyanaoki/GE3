@@ -52,9 +52,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	delete input_;
 	
+	winApp_->Finalize();
 	delete winApp_;
 	
-	winApp_->Finalize();
 	delete dxCommon_;
 
 	delete spriteCommon;
