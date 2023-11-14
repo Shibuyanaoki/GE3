@@ -1,7 +1,7 @@
 #pragma once
-#include <dxcapi.h>
 #include <wrl.h>
 #include <string>
+#include <dxcapi.h>
 
 class SpriteCommon
 {
@@ -14,7 +14,7 @@ private:
 		const std::wstring& filePath,
 		const wchar_t* profile,
 		IDxcUtils* dxcUtils,
-		IDxcCompiler* dxcCompiler,
+		IDxcCompiler3* dxcCompiler,
 		IDxcIncludeHandler* dxcIncludeHandler
 	);
 
