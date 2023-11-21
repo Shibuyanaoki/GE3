@@ -23,14 +23,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	input_ = new Input();
 	input_->Initialize(winApp_);
 
-	SpriteCommon* spriteCommon = nullptr;
+	SpriteCommon* spriteCommon_ = nullptr;
 	//スプライトの共通部分の生成と初期化
-	spriteCommon = new SpriteCommon;
-	spriteCommon->Initialize();
+	spriteCommon_ = new SpriteCommon;
+	spriteCommon_->Initialize(dxCommon_);
 
 	//スプライトの生成と初期化
-	Sprite* sprite = new Sprite();
-	sprite->Initialize();
+	Sprite* sprite_ = new Sprite();
+	sprite_->Initialize(dxCommon_,spriteCommon_);
 
 
 	// ゲームループ
@@ -44,7 +44,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		//更新前処理
 		dxCommon_->PreDraw();
 
-		
+		sprite_->Draw();
 
 		//更新後処理
 		dxCommon_->PosDraw();
@@ -57,8 +57,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	
 	delete dxCommon_;
 
-	delete spriteCommon;
-	delete sprite;
+	delete spriteCommon_;
+	delete sprite_;
 
 	return 0;
 }
