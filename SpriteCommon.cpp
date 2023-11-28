@@ -49,7 +49,7 @@ void SpriteCommon::Initialize(DirectXCommon* dxCommon)
 	D3D12_INPUT_ELEMENT_DESC inputElementDesc[1] = {};
 	inputElementDesc[0].SemanticName = "POSITION";
 	inputElementDesc[0].SemanticIndex = 0;
-	inputElementDesc[0].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+	inputElementDesc[0].Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
 	inputElementDesc[0].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
 	D3D12_INPUT_LAYOUT_DESC inputLayoutDesc{};
 	inputLayoutDesc.pInputElementDescs = inputElementDesc;
@@ -67,12 +67,12 @@ void SpriteCommon::Initialize(DirectXCommon* dxCommon)
 	rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
 
 	//ì«Ç›çûÇ›èàóù
-	ComPtr<IDxcBlob> vertexShaderBlob = CompileShader(L"Resource/shaders/SpriteVS.hlsl",
+	ComPtr<IDxcBlob> vertexShaderBlob = CompileShader(L"Resources/shaders/SpriteVS.hlsl",
 		L"vs_6_0", dxcUtils.Get(), dxcCompiler.Get(), includeHandler.Get());
 	assert(SUCCEEDED(result));
 
-	ComPtr<IDxcBlob> pixcelShaderBlob = CompileShader(L"Resource/shaders/SpritePS.hlsl",
-		L"vs_6_0", dxcUtils.Get(), dxcCompiler.Get(), includeHandler.Get());
+	ComPtr<IDxcBlob> pixcelShaderBlob = CompileShader(L"Resources/shaders/SpritePS.hlsl",
+		L"ps_6_0", dxcUtils.Get(), dxcCompiler.Get(), includeHandler.Get());
 
 	//PipelineState
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC graphicsPipelineStateDesc{};
@@ -113,9 +113,9 @@ IDxcBlob* SpriteCommon::CompileShader(const std::wstring& filePath, const wchar_
 		filePath.c_str(),
 		L"-E",L"main",
 		L"-T",profile,
-		L"-Zi",L"-Qembed_debug"
+		L"-Zi",L"-Qembed_debug",
 		L"-Od",
-		L"-Zpr",
+		L"-Zpr"
 	};
 
 	IDxcResult* shaderResult = nullptr;

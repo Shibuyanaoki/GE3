@@ -1,6 +1,6 @@
 struct PixelShaderOutput
 {
-    float4 color : SV_TARGETO;
+    float4 color : SV_TARGET0;
 };
 
 PixelShaderOutput main()
