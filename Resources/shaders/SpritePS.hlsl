@@ -6,6 +6,6 @@ struct PixelShaderOutput
 PixelShaderOutput main()
 {
     PixelShaderOutput output;
-    output.color = float(1, 1, 1, 1);
+    output.color = float4(1, 1, 1, 1);
     return output;
 }
