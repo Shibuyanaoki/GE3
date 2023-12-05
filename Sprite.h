@@ -18,11 +18,22 @@ public:
 	void Draw();
 
 private:
+	//頂点情報作成
+	void CreateVertex();
+
+	void CreateMaterial();
+
+private:
 	DirectXCommon* dxCommon_ = nullptr;
 	SpriteCommon* common_ = nullptr;
 
 	ComPtr<ID3D12Resource> vertexResource;
 	D3D12_VERTEX_BUFFER_VIEW vertexBufferView{};
+
+	ComPtr<ID3D12Resource> materialResource;
+
+	//パラメータ
+	DirectX
 
 };
 
