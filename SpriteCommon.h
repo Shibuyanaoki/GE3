@@ -1,4 +1,5 @@
 #pragma once
+#include <Windows.h>
 #include <wrl.h>
 #include <string>
 #include <dxcapi.h>
