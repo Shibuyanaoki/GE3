@@ -12,29 +12,66 @@ void Sprite::Initialize(DirectXCommon* dxCommon, SpriteCommon* common)
 	dxCommon_ = dxCommon;
 	common_ = common;
 
-	vertexResource= CreateBufferResouce
-
-	vertexBufferView.BufferLocation = vertexResource->GetGPUVirtualAddress();
-	vertexBufferView.SizeInBytes = sizeof(DirectX::XMFLOAT4) * 3;
-	vertexBufferView.StrideInBytes = sizeof(DirectX::XMFLOAT4);
-
+	// 頂点情報
+	CreateVertex();
+	// 色
+	CreateMaterial();
+	// 行列
+	CreateWVP();
 }
 
 void Sprite::Draw()
 {
-	XMFLOAT4* vertexData = nullptr;
-	vertexResource->Map(0, nullptr, reinterpret_cast<void**>(&vertexData));
 
-	vertexData[0] = { -0.5f,-0.5f,0.0f,1.0f };
-	vertexData[1] = { 0.0f,+0.5f,0.0f,1.0f };
-	vertexData[2] = { +0.5f,-0.5f,0.0f,1.0f };
+	// Y軸中心に回転
+	transform.rotation.y += 0.03f;
+	// ワールド 
+	XMMATRIX scaleMatrix = XMMatrixScalingFromVector(XMLoadFloat3(&transform.scale));
+	XMMATRIX rotateMatrix = XMMatrixRotationRollPitchYawFromVector(XMLoadFloat3(&transform.rotation));
+	XMMATRIX translationMatrix = XMMatrixTranslationFromVector(XMLoadFloat3(&transform.translate));
+	// 回転行列とスケール行列の掛け算
+	XMMATRIX rotationAndScaleMatrix = XMMatrixMultiply(rotateMatrix, scaleMatrix);
+	// 最終敵は行列変換
+	XMMATRIX worldMatrix = XMMatrixMultiply(rotationAndScaleMatrix, translationMatrix);
+
+	// カメラ
+	XMMATRIX cameraScaleMatrix = XMMatrixScalingFromVector(XMLoadFloat3(&cameraTransform.scale));
+	XMMATRIX cameraRotateMatrix = XMMatrixRotationRollPitchYawFromVector(XMLoadFloat3(&cameraTransform.rotation));
+	XMMATRIX cameraTranslationMatrix = XMMatrixTranslationFromVector(XMLoadFloat3(&cameraTransform.translate));
+	// 回転行列とスケール行列の掛け算
+	XMMATRIX cameraRotateAndScaleMatrix = XMMatrixMultiply(cameraRotateMatrix, cameraScaleMatrix);
+	// 最終敵は行列変換
+	XMMATRIX cameraMatrix = XMMatrixMultiply(cameraRotateAndScaleMatrix, cameraTranslationMatrix);
+
+	// view
+	XMMATRIX view = XMMatrixInverse(nullptr, cameraMatrix);
+	// Proj
+	XMMATRIX proj = XMMatrixPerspectiveFovLH
+	(XMConvertToRadians(45.0f),
+		(float)WinApp::window_width / (float)WinApp::window_height,
+		0.1f,
+		100.0f
+	);
+
+	// WVP
+	XMMATRIX worldViewProjectionMatrix = worldMatrix * (view * proj);
+
+	//行列の代入
+	*wvpData = worldViewProjectionMatrix;
+
 
 	dxCommon_->GetCommandList()->SetGraphicsRootSignature(common_->GetRootSignature());
 	dxCommon_->GetCommandList()->SetPipelineState(common_->GetPipelineState());
 
+	// 頂点情報
 	dxCommon_->GetCommandList()->IASetVertexBuffers(0, 1, &vertexBufferView);
 
 	dxCommon_->GetCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	// 色情報
+	dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
+	// 行列
+	dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(1, wvpResource->GetGPUVirtualAddress());
 
 	dxCommon_->GetCommandList()->DrawInstanced(3, 1, 0, 0);
 
@@ -42,12 +79,40 @@ void Sprite::Draw()
 
 void Sprite::CreateVertex()
 {
+	// VertexResource
+	vertexResource = CreateBufferResouce(dxCommon_->GetDevice(), sizeof(XMFLOAT4) * 3);
+
+	vertexBufferView.BufferLocation = vertexResource->GetGPUVirtualAddress();
+	vertexBufferView.SizeInBytes = sizeof(DirectX::XMFLOAT4) * 3;
+	vertexBufferView.StrideInBytes = sizeof(DirectX::XMFLOAT4);
+
+	// 頂点情報
+	XMFLOAT4* vertexData = nullptr;
+	vertexResource->Map(0, nullptr, reinterpret_cast<void**>(&vertexData));
+
+	vertexData[0] = { -0.5f,-0.5f,0.0f,1.0f };
+	vertexData[1] = { 0.0f,+0.5f,0.0f,1.0f };
+	vertexData[2] = { +0.5f,-0.5f,0.0f,1.0f };
+
 }
 
 void Sprite::CreateMaterial()
 {
-	materialResource
+	materialResource = CreateBufferResouce(dxCommon_->GetDevice(), sizeof(XMFLOAT4));
 
+	XMFLOAT4* materialData = nullptr;
+	materialResource->Map(0, nullptr, reinterpret_cast<void**>(&materialData));
 
+	*materialData = color_;
+
+}
+
+void Sprite::CreateWVP()
+{
+	wvpResource = CreateBufferResouce(dxCommon_->GetDevice(), sizeof(XMMATRIX));
+
+	wvpResource->Map(0, nullptr, reinterpret_cast<void**>(&wvpData));
+
+	*wvpData = XMMatrixIdentity();
 
 }
