@@ -16,7 +16,6 @@ void SpriteCommon::Initialize(DirectXCommon* dxCommon)
 	ComPtr<IDxcUtils> dxcUtils;
 
 	ComPtr<IDxcCompiler3> dxcCompiler;
-
 	ComPtr<IDxcIncludeHandler> includeHandler;
 
 	result = DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&dxcUtils));
