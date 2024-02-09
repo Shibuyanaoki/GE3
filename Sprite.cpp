@@ -3,6 +3,8 @@
 
 #include <DirectXMath.h>
 
+#include "External/imGui/imgui.h"
+
 using namespace Microsoft::WRL;
 using namespace DirectX;
 
@@ -18,6 +20,13 @@ void Sprite::Initialize(DirectXCommon* dxCommon, SpriteCommon* common)
 	CreateMaterial();
 	// çsóÒ
 	CreateWVP();
+}
+
+void Sprite::Updete()
+{
+	ImGui::Begin("Texture");
+	ImGui::DragFloat3("Pos", &transform.translate.x, 0.1f);
+	ImGui::End();
 }
 
 void Sprite::Draw()
