@@ -8,13 +8,16 @@
 
 using namespace Microsoft::WRL;
 
+
+const uint32_t DirectXCommon::kMaxSRVCount = 512;
+
 void DirectXCommon::Initialize(WinApp* winApp)
 {
 	// DirectX初期化処理　ここから
 	this->winApp_ = winApp;
 
 	//FPS固定初期化
-	InitializeFixFPS();
+	//InitializeFixFPS();
 
 	DeviceInitialize();
 
@@ -30,7 +33,7 @@ void DirectXCommon::Initialize(WinApp* winApp)
 
 	// ディスクリプタヒープ(情報を保存しておくメモリの作成)
 	rtvDescriptorHeap = CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 2, false);
-	srvDescriptorHeap = CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 128, true);
+	srvDescriptorHeap = CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, kMaxSRVCount, true);
 }
 
 void DirectXCommon::PreDraw()
@@ -113,7 +116,7 @@ void DirectXCommon::PosDraw()
 	}
 
 	//FPS固定更新
-	UpdateFixFPS();
+	//UpdateFixFPS();
 
 	// キューをクリア
 	result = commandAllocator->Reset();
@@ -355,35 +358,35 @@ ID3D12DescriptorHeap* DirectXCommon::CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_
 	return descriptorHeap;
 }
 
-void DirectXCommon::InitializeFixFPS()
-{
-	//現在時刻を記録
-	reference_ = std::chrono::steady_clock::now();
-}
-
-void DirectXCommon::UpdateFixFPS()
-{
-	// 1/60にピッタリな時間
-	const std::chrono::microseconds kMinTime(uint64_t(1000000.0f / 60.0f));
-	// 1/60秒によりわずかに短い時間
-	const std::chrono::microseconds kMinCheckTime(uint64_t(1000000.0f / 65.0f));
-
-	//現在時刻を取得
-	std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
-	//前回の記録からの経過時間を取得
-	std::chrono::microseconds elapsed = std::chrono::duration_cast<std::chrono::microseconds>(now - reference_);
-
-	// 1/60秒 (よりわずかに短い時間)経っていない場合
-	if (elapsed < kMinCheckTime) {
-		// 1/60秒経過するまで微小なスリープを繰り返す
-		while (std::chrono::steady_clock::now() - reference_ < kMinTime) {
-			//　1マイクロ秒スリープ
-			std::this_thread::sleep_for(std::chrono::microseconds(1));
-		}
-	}
-
-	//現在の時間を記録する
-	reference_ = std::chrono::steady_clock::now();
-
-}
+//void DirectXCommon::InitializeFixFPS()
+//{
+//	//現在時刻を記録
+//	reference_ = std::chrono::steady_clock::now();
+//}
+//
+//void DirectXCommon::UpdateFixFPS()
+//{
+//	// 1/60にピッタリな時間
+//	const std::chrono::microseconds kMinTime(uint64_t(1000000.0f / 60.0f));
+//	// 1/60秒によりわずかに短い時間
+//	const std::chrono::microseconds kMinCheckTime(uint64_t(1000000.0f / 65.0f));
+//
+//	//現在時刻を取得
+//	std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+//	//前回の記録からの経過時間を取得
+//	std::chrono::microseconds elapsed = std::chrono::duration_cast<std::chrono::microseconds>(now - reference_);
+//
+//	// 1/60秒 (よりわずかに短い時間)経っていない場合
+//	if (elapsed < kMinCheckTime) {
+//		// 1/60秒経過するまで微小なスリープを繰り返す
+//		while (std::chrono::steady_clock::now() - reference_ < kMinTime) {
+//			//　1マイクロ秒スリープ
+//			std::this_thread::sleep_for(std::chrono::microseconds(1));
+//		}
+//	}
+//
+//	//現在の時間を記録する
+//	reference_ = std::chrono::steady_clock::now();
+//
+//}
 

@@ -4,7 +4,6 @@
 #include <d3d12.h>
 #include <dxgi1_6.h>
 #include <vector>
-#include <chrono>
 
 #include "WinApp.h"
 
@@ -19,7 +18,6 @@ public:
 	void Initialize(WinApp* winApp);
 
 	void PreDraw();
-
 	void PosDraw();
 
 	//Getter
@@ -52,10 +50,13 @@ private:
 	// ディスクリプタヒープ作成
 	ID3D12DescriptorHeap* CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE heapType, UINT numDescripots, bool shaderVisible);
 
-	//FPS固定初期化処理
-	void InitializeFixFPS();
-	//FPS固定更新
-	void UpdateFixFPS();
+	////FPS固定初期化処理
+	//void InitializeFixFPS();
+	////FPS固定更新
+	//void UpdateFixFPS();
+
+public:
+	static const uint32_t kMaxSRVCount;
 
 private:
 	WinApp* winApp_ = nullptr;
@@ -93,7 +94,7 @@ private:
 	ComPtr<ID3D12DescriptorHeap> srvDescriptorHeap;
 
 	//記録用時間計測の変数
-	std::chrono::steady_clock::time_point reference_;
+	//std::chrono::steady_clock::time_point reference_;
 
 };
 

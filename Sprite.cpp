@@ -5,14 +5,19 @@
 
 #include "External/imGui/imgui.h"
 
+#include"TextureManager.h"
+
+
 using namespace Microsoft::WRL;
 using namespace DirectX;
 
-void Sprite::Initialize(DirectXCommon* dxCommon, SpriteCommon* common)
+void Sprite::Initialize(SpriteCommon* common, std::wstring textureFilePath)
 {
 
-	dxCommon_ = dxCommon;
 	common_ = common;
+	dxCommon_ = common_->GetDirectXCommon();
+
+	textureIndex_ = TextureManager::Getinstance()->GetTextureIndexFilePath(textureFilePath);
 
 	// 頂点情報
 	CreateVertex();
@@ -20,12 +25,62 @@ void Sprite::Initialize(DirectXCommon* dxCommon, SpriteCommon* common)
 	CreateMaterial();
 	// 行列
 	CreateWVP();
+
+	CreateIndex();
+
+	AdjustTextureSize();
+
 }
 
-void Sprite::Updete()
+void Sprite::Update()
 {
+
+	transform.translate = { position.x,position.y,0.0f };
+	transform.rotation = { 0,0,rotation };
+	materialData->color = color_;
+	transform.scale = { size.x,size.y ,1.0f };
+
+	float left = 0.0f - anchorPoint.x;
+	float right = 1.0f - anchorPoint.x;
+	float top = 0.0f - anchorPoint.y;
+	float bottom = 1.0f - anchorPoint.y;
+
+	if (isFlipX == true)
+	{
+		left = -left;
+		right = -right;
+	}
+	if (isFlipY == true)
+	{
+		top = -top;
+		bottom = -bottom;
+	}
+
+	vertexData[0].position = { left,bottom,0.0f,1.0f };
+	vertexData[1].position = { left,top,0.0f,1.0f };
+	vertexData[2].position = { right,bottom,0.0f,1.0f };
+	vertexData[3].position = { right,top,0.0f,1.0f };
+
+	const DirectX::TexMetadata& metaData = TextureManager::Getinstance()->GetMetaData(textureIndex_);
+
+	float tex_left = textureLeftTop.x / metaData.width;
+	float tex_right = (textureLeftTop.x + textureSize.x) / metaData.width;
+	float tex_top = textureLeftTop.y / metaData.height;
+	float tex_bottom = (textureLeftTop.y + textureSize.y) / metaData.height;
+
+	vertexData[0].texcoord = { tex_left,tex_bottom };
+	vertexData[1].texcoord = { tex_left,tex_top };
+	vertexData[2].texcoord = { tex_right,tex_bottom };
+	vertexData[3].texcoord = { tex_right,tex_top };
+
 	ImGui::Begin("Texture");
 	ImGui::DragFloat3("Pos", &transform.translate.x, 0.1f);
+
+	ImGui::DragFloat3("UV-Pos", &uvTransform.translate.x, 0.01f, -10.0f, 10.0f);
+	ImGui::SliderAngle("UV-Rot", &uvTransform.rotation.z);
+	ImGui::DragFloat3("UV-Scale", &uvTransform.scale.x, 0.01f, -10.f, 10.f);
+
+
 	ImGui::End();
 }
 
@@ -68,60 +123,113 @@ void Sprite::Draw()
 	//行列の代入
 	*wvpData = worldViewProjectionMatrix;
 
+	XMMATRIX uvScaleMatrix = XMMatrixScalingFromVector(XMLoadFloat3(&uvTransform.scale));
+	XMMATRIX uvRotateMatrix = XMMatrixRotationRollPitchYawFromVector(XMLoadFloat3(&uvTransform.rotation));
+	XMMATRIX uvTranslationMatrix = XMMatrixTranslationFromVector(XMLoadFloat3(&uvTransform.translate));
 
-	dxCommon_->GetCommandList()->SetGraphicsRootSignature(common_->GetRootSignature());
-	dxCommon_->GetCommandList()->SetPipelineState(common_->GetPipelineState());
+	XMMATRIX uvRotationAndScaleMatrix = XMMatrixMultiply(uvRotateMatrix, uvScaleMatrix);
+
+	XMMATRIX uvWorldMatrix = XMMatrixMultiply(uvRotationAndScaleMatrix, uvTranslationMatrix);
+	materialData->uvTransform = uvWorldMatrix;
+
+
+	/*dxCommon_->GetCommandList()->SetGraphicsRootSignature(common_->GetRootSignature());
+	dxCommon_->GetCommandList()->SetPipelineState(common_->GetPipelineState());*/
 
 	// 頂点情報
 	dxCommon_->GetCommandList()->IASetVertexBuffers(0, 1, &vertexBufferView);
 
-	dxCommon_->GetCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	dxCommon_->GetCommandList()->IASetIndexBuffer(&indexBufferView);
+
+	//dxCommon_->GetCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	// 色情報
 	dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
 	// 行列
 	dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(1, wvpResource->GetGPUVirtualAddress());
 
-	dxCommon_->GetCommandList()->DrawInstanced(3, 1, 0, 0);
+	dxCommon_->GetCommandList()->SetGraphicsRootDescriptorTable(2, TextureManager::Getinstance()->GetSrvHandleGPU(textureIndex_));
 
+	//dxCommon_->GetCommandList()->DrawInstanced(3, 1, 0, 0);
+
+	dxCommon_->GetCommandList()->DrawIndexedInstanced(6, 1, 0, 0, 0);
+
+}
+
+void Sprite::SetTexture(std::wstring textureFilePath)
+{
+	textureIndex_ = TextureManager::Getinstance()->GetTextureIndexFilePath(textureFilePath);
 }
 
 void Sprite::CreateVertex()
 {
 	// VertexResource
-	vertexResource = CreateBufferResouce(dxCommon_->GetDevice(), sizeof(XMFLOAT4) * 3);
+	vertexResource = CreateBufferResource(dxCommon_->GetDevice(), sizeof(VertexData) * 4);
 
 	vertexBufferView.BufferLocation = vertexResource->GetGPUVirtualAddress();
-	vertexBufferView.SizeInBytes = sizeof(DirectX::XMFLOAT4) * 3;
-	vertexBufferView.StrideInBytes = sizeof(DirectX::XMFLOAT4);
+	vertexBufferView.SizeInBytes = sizeof(VertexData) * 4;
+	vertexBufferView.StrideInBytes = sizeof(VertexData);
 
 	// 頂点情報
-	XMFLOAT4* vertexData = nullptr;
+	//XMFLOAT4* vertexData = nullptr;
 	vertexResource->Map(0, nullptr, reinterpret_cast<void**>(&vertexData));
 
-	vertexData[0] = { -0.5f,-0.5f,0.0f,1.0f };
-	vertexData[1] = { 0.0f,+0.5f,0.0f,1.0f };
-	vertexData[2] = { +0.5f,-0.5f,0.0f,1.0f };
+	vertexData[0].position = { 0.0f,1.0f,0.0f,1.0f };
+	vertexData[0].texcoord = { 0.0f,1.0f };
+
+	vertexData[1].position = { 0.0f,0.0f,0.0f,1.0f };
+	vertexData[1].texcoord = { 0.0f,0.0f };
+
+	vertexData[2].position = { 1.0f,1.0f,0.0f,1.0f };
+	vertexData[2].texcoord = { 1.0f,1.0f };
+
+	vertexData[3].position = { 1.0f,0.0f,0.0f,1.0f };
+	vertexData[3].texcoord = { 1.0f,0.0f };
 
 }
 
 void Sprite::CreateMaterial()
 {
-	materialResource = CreateBufferResouce(dxCommon_->GetDevice(), sizeof(XMFLOAT4));
+	materialResource = CreateBufferResource(dxCommon_->GetDevice(), sizeof(MaterialData));
 
-	XMFLOAT4* materialData = nullptr;
 	materialResource->Map(0, nullptr, reinterpret_cast<void**>(&materialData));
 
-	*materialData = color_;
+	materialData->color = color_;
+	materialData->uvTransform = XMMatrixIdentity();
 
 }
 
 void Sprite::CreateWVP()
 {
-	wvpResource = CreateBufferResouce(dxCommon_->GetDevice(), sizeof(XMMATRIX));
+	wvpResource = CreateBufferResource(dxCommon_->GetDevice(), sizeof(XMMATRIX));
 
 	wvpResource->Map(0, nullptr, reinterpret_cast<void**>(&wvpData));
 
 	*wvpData = XMMatrixIdentity();
 
+}
+
+void Sprite::CreateIndex()
+{
+	indexResource = CreateBufferResource(dxCommon_->GetDevice(), sizeof(uint32_t) * 6);
+
+	indexBufferView.BufferLocation = indexResource->GetGPUVirtualAddress();
+	indexBufferView.SizeInBytes = sizeof(uint32_t) * 6;
+	indexBufferView.Format = DXGI_FORMAT_R32_UINT;
+
+	uint32_t* indexData = nullptr;
+	indexResource->Map(0, nullptr, reinterpret_cast<void**>(&indexData));
+
+	indexData[0] = 0; indexData[1] = 1; indexData[2] = 2;
+
+	indexData[3] = 1; indexData[4] = 3; indexData[5] = 2;
+}
+
+void Sprite::AdjustTextureSize()
+{
+	const DirectX::TexMetadata& metaData = TextureManager::Getinstance()->GetMetaData(textureIndex_);
+
+	textureSize.x = static_cast<float>(metaData.width);
+	textureSize.y = static_cast<float>(metaData.height);
+	size = textureSize;
 }

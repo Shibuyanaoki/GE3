@@ -5,6 +5,9 @@
 #include "Sprite.h"
 
 #include "ImGuiManager.h"
+#include<vector>
+
+#include"TextureManager.h"
 
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
@@ -34,9 +37,17 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	spriteCommon_->Initialize(dxCommon_);
 
 	//スプライトの生成と初期化
-	Sprite* sprite_ = new Sprite();
-	sprite_->Initialize(dxCommon_,spriteCommon_);
+	SpriteCommon* common = new SpriteCommon();
+	common->Initialize(dxCommon_);
 
+	std::vector<Sprite*> sprite;
+	for (int i = 0; i < 1; i++) {
+		Sprite* temp = new Sprite();
+		if (i % 2 == 0) temp->Initialize(common, L"Resources/mario.jpg");
+		else if (i % 2 == 1)temp->Initialize(common, { L"Resources/reimu.png" });
+		temp->SetPosition({ 400,200 });
+		sprite.push_back(temp);
+	}
 
 	// ゲームループ
 	while (true) {
@@ -49,30 +60,33 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		//入力
 		input_->Update();
-		sprite_->Updete();
+
+		for (int i = 0; i < 1; i++)
+		{
+			sprite[i]->Update();
+		}
 
 		//更新前処理
 		ImGuiManager::CreateCommand();
 		dxCommon_->PreDraw();
+		common->SpritePreDraw();
 
-		sprite_->Draw();
+		for (int i = 0; i < 1; i++) {
+			sprite[i]->Draw();
+		}
 
 		//更新後処理
 		ImGuiManager::CommandsExcute(dxCommon_->GetCommandList());
 		dxCommon_->PosDraw();
 	}
 
+	TextureManager::Getinstance()->Finalize();
+	delete common;
+	delete imgui_;
 	delete input_;
-	
+	delete dxCommon_;
 	winApp_->Finalize();
 	delete winApp_;
-	
-	delete dxCommon_;
-
-	delete spriteCommon_;
-	delete sprite_;
-
-	delete imgui_;
 
 	return 0;
 }
