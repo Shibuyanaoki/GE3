@@ -110,12 +110,17 @@ void Sprite::Draw()
 	// view
 	XMMATRIX view = XMMatrixInverse(nullptr, cameraMatrix);
 	// Proj
-	XMMATRIX proj = XMMatrixPerspectiveFovLH
+	/*XMMATRIX proj = XMMatrixPerspectiveFovLH
 	(XMConvertToRadians(45.0f),
 		(float)WinApp::window_width / (float)WinApp::window_height,
 		0.1f,
 		100.0f
-	);
+	);*/
+
+	XMMATRIX proj = XMMatrixOrthographicOffCenterLH(0,
+		WinApp::window_width,
+		WinApp::window_height,
+		0, 0.1f, 100.0f);
 
 	// WVP
 	XMMATRIX worldViewProjectionMatrix = worldMatrix * (view * proj);
