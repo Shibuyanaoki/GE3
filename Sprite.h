@@ -34,9 +34,20 @@ private:
 
 public:
 	// 初期化
-	void Initialize( SpriteCommon* common);
+	void Initialize(SpriteCommon* common);
 	void Updete();
 	void Draw();
+
+	//Getter/Setter
+	DirectX::XMFLOAT2 GetPosition() { return position; }
+	float GetRotation() { return rotation; }
+	DirectX::XMFLOAT4 GetColor() { return color_; }
+	DirectX::XMFLOAT2 GetSize() { return size; }
+
+	void SetPosition(DirectX::XMFLOAT2 pos) { position = pos; }
+	void SetRotation(float rot) { rotation = rot; }
+	void SetColor(DirectX::XMFLOAT4 color) { color_ = color; }
+	void SetSize(DirectX::XMFLOAT2 size) { this->size = size; }
 
 private:
 	// 頂点情報作成
@@ -55,6 +66,7 @@ private:
 	// 頂点情報
 	ComPtr<ID3D12Resource> vertexResource;
 	D3D12_VERTEX_BUFFER_VIEW vertexBufferView{};
+	VertexData* vertexData = nullptr;
 
 	// インデックス
 	ComPtr<ID3D12Resource> indexResource;
@@ -76,11 +88,14 @@ private:
 	// UV座標
 	Transform uvTransform = { {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
 
-							//scale			//Rotate		 //Translate
+	// 自機					scale				Rotate			Translate
 	Transform transform = { {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
+	DirectX::XMFLOAT2 position = { 0.0f,0.0f };
+	float rotation = 0;
+	DirectX::XMFLOAT2 size = { 1.0f,1.0f };
 
 	// カメラ
-	Transform cameraTransform= { {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,-5.0f} };
+	Transform cameraTransform = { {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,-5.0f} };
 
 };
 

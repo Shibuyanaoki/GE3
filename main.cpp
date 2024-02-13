@@ -6,6 +6,8 @@
 
 #include "ImGuiManager.h"
 
+#include <vector>
+
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
@@ -34,10 +36,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	spriteCommon_->Initialize(dxCommon_);
 
 	//スプライトの生成と初期化
-	Sprite* sprite_ = new Sprite();
-	sprite_->Initialize(spriteCommon_);
-
-
+	std::vector<Sprite*> sprite_;
+	for (int i = 0; i < 5; i++) {
+		Sprite* temp = new Sprite;
+		temp->Initialize(spriteCommon_);
+		temp->SetPosition({(float)i*1, 0});
+		sprite_.push_back(temp);
+	}
+	
 	// ゲームループ
 	while (true) {
 		if (winApp_->Update() == true) {
@@ -49,14 +55,42 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		//入力
 		input_->Update();
-		sprite_->Updete();
+
+		//// 移動
+		//DirectX::XMFLOAT2 pos = sprite_->GetPosition();
+		//pos.x += 0.01;
+		//sprite_->SetPosition(pos);
+
+		//// 回転
+		//float rot = sprite_->GetRotation();
+		//rot += 0.005f;
+		//sprite_->SetRotation(rot);
+
+		//// 色
+		//DirectX::XMFLOAT4 color = sprite_->GetColor();
+		//color.x -= 0.01f;
+		//if (color.x < 0) {
+		//	color.x = 1.0f;
+		//}
+		//sprite_->SetColor(color);
+
+		//// サイズ
+		//DirectX::XMFLOAT2 size = sprite_->GetSize();
+		//size.y += 0.01f;
+		//sprite_->SetSize(size);
+
+		for (int i = 0; i < 5; i++) {
+			sprite_[i]->Updete();
+		}
 
 		//更新前処理
 		ImGuiManager::CreateCommand();
 		dxCommon_->PreDraw();
 		spriteCommon_->SpritePreDraw();
 
-		sprite_->Draw();
+		for (int i = 0; i < 5; i++) {
+			sprite_[i]->Draw();
+		}
 
 		//更新後処理
 		ImGuiManager::CommandsExcute(dxCommon_->GetCommandList());
@@ -64,14 +98,17 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	}
 
 	delete input_;
-	
+
 	winApp_->Finalize();
 	delete winApp_;
-	
+
 	delete dxCommon_;
 
 	delete spriteCommon_;
-	delete sprite_;
+
+	for (int i = 0; i < 5; i++) {
+		delete sprite_[i];
+	}
 
 	delete imgui_;
 
