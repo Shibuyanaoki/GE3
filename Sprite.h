@@ -21,9 +21,15 @@ private:
 		DirectX::XMFLOAT3 translate;
 	};
 
+	struct VertexData
+	{
+		DirectX::XMFLOAT4 position;
+		DirectX::XMFLOAT2 texcoord;
+	};
+
 public:
 	//初期化
-	void Initialize(DirectXCommon* dxCommon, SpriteCommon* common);
+	void Initialize( SpriteCommon* common);
 	void Updete();
 	void Draw();
 
@@ -49,8 +55,11 @@ private:
 	ComPtr<ID3D12Resource> wvpResource;
 	DirectX::XMMATRIX* wvpData = nullptr;
 
+	// 画像の保存先のアドレス
+	D3D12_GPU_DESCRIPTOR_HANDLE textureSrvHandleGPU;
+
 	// パラメータ
-	DirectX::XMFLOAT4 color_ = { 1.0f, 0.0f, 0.0f, 1.0f };
+	DirectX::XMFLOAT4 color_ = { 1.0f, 1.0f, 1.0f, 1.0f };
 							//scale			//Rotate		 //Translate
 	Transform transform = { {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
 
