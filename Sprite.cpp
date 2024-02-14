@@ -5,37 +5,18 @@
 
 #include "External/imGui/imgui.h"
 
+#include "TextureManager.h"
+
 using namespace Microsoft::WRL;
 using namespace DirectX;
 
-void Sprite::Initialize(SpriteCommon* common)
+void Sprite::Initialize(SpriteCommon* common, std::wstring textureFilePath)
 {
 
 	common_ = common;
 	dxCommon_ = common_->GetDirectXCommon();
 
-	// 画像の読み込み
-	DirectX::ScratchImage mipImages = common->LoadTexture(L"Resources/mario.jpg");
-	const DirectX::TexMetadata& metaData = mipImages.GetMetadata();
-	ID3D12Resource* textureResource = CreateTextureResource(dxCommon_->GetDevice(), metaData);
-	common_->UploadTextureData(textureResource, mipImages);
-
-	// ShaderResourceView作成
-	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
-	srvDesc.Format = metaData.format;
-	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-	srvDesc.Texture2D.MipLevels = UINT(metaData.mipLevels);
-
-	// 保存メモリの場所を指定
-	D3D12_CPU_DESCRIPTOR_HANDLE textureSrvHandleCPU = dxCommon_->GetSrvDescriptorHeap()->GetCPUDescriptorHandleForHeapStart();
-	textureSrvHandleGPU = dxCommon_->GetSrvDescriptorHeap()->GetGPUDescriptorHandleForHeapStart();
-
-	textureSrvHandleCPU.ptr += dxCommon_->GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	textureSrvHandleGPU.ptr += dxCommon_->GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-	// 読み込んだ情報をSrvSesc(枠)とHandle(位置)を使って保存する
-	dxCommon_->GetDevice()->CreateShaderResourceView(textureResource, &srvDesc, textureSrvHandleCPU);
+	textureFilePath = TextureManager::GetInstance()->GetTextureIndexFilePath(textureFilePath);
 
 	// 頂点情報
 	CreateVertex();
@@ -57,16 +38,16 @@ void Sprite::Updete()
 	transform.scale = { size.x,size.y,1.0f };
 
 
-	vertexData[0].position = { -0.5f, -0.5f, 0.0f, 1.0f };
+	vertexData[0].position = { 0.0f, 1.0f, 0.0f, 1.0f };
 	vertexData[0].texcoord = { 0.0f, 1.0f };
 
-	vertexData[1].position = { -0.5f, +0.5f, 0.0f, 1.0f };
+	vertexData[1].position = { 0.0f, 0.0f, 0.0f, 1.0f };
 	vertexData[1].texcoord = { 0.0f, 0.0f };
 
-	vertexData[2].position = { +0.5f, -0.5f, 0.0f, 1.0f };
+	vertexData[2].position = { 1.0f, 1.0f, 0.0f, 1.0f };
 	vertexData[2].texcoord = { 1.0f, 1.0f };
 
-	vertexData[3].position = { +0.5f, +0.5f, 0.0f, 1.0f };
+	vertexData[3].position = { 1.0f, 0.0f, 0.0f, 1.0f };
 	vertexData[3].texcoord = { 1.0f, 0.0f };
 
 
@@ -106,13 +87,7 @@ void Sprite::Draw()
 	// view
 	XMMATRIX view = XMMatrixInverse(nullptr, cameraMatrix);
 	// Proj
-	XMMATRIX proj = XMMatrixPerspectiveFovLH
-	(XMConvertToRadians(45.0f),
-		(float)WinApp::window_width / (float)WinApp::window_height,
-		0.1f,
-		100.0f
-	);
-
+	XMMATRIX proj = XMMatrixOrthographicOffCenterLH(0, WinApp::window_width,WinApp::window_height, 0,0.1f, 100.0f);
 	// WVP
 	XMMATRIX worldViewProjectionMatrix = worldMatrix * (view * proj);
 
@@ -140,13 +115,18 @@ void Sprite::Draw()
 	// 行列
 	dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(1, wvpResource->GetGPUVirtualAddress());
 	// 画像
-	dxCommon_->GetCommandList()->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU);
+	dxCommon_->GetCommandList()->SetGraphicsRootDescriptorTable(2, TextureManager::GetInstance()->GetSrvhandleGPU(textureIndex));
 
 	// 頂点情報のみ描画
 	//dxCommon_->GetCommandList()->DrawInstanced(6, 1, 0, 0);
 	//インデックス情報がある場合の描画
 	dxCommon_->GetCommandList()->DrawIndexedInstanced(6, 1, 0, 0, 0);
 
+}
+
+void Sprite::SetTexture(std::wstring textureFilePath)
+{
+	textureIndex = TextureManager::GetInstance()->GetTextureIndexFilePath(textureFilePath);
 }
 
 void Sprite::CreateVertex()
@@ -161,16 +141,16 @@ void Sprite::CreateVertex()
 	// 頂点情報
 	vertexResource->Map(0, nullptr, reinterpret_cast<void**>(&vertexData));
 
-	vertexData[0].position = { -0.5f, -0.5f, 0.0f, 1.0f };
+	vertexData[0].position = { 0.0f, 1.0f, 0.0f, 1.0f };
 	vertexData[0].texcoord = { 0.0f, 1.0f };
 
-	vertexData[1].position = { -0.5f, +0.5f, 0.0f, 1.0f };
+	vertexData[1].position = { 0.0f, 0.0f, 0.0f, 1.0f };
 	vertexData[1].texcoord = { 0.0f, 0.0f };
 
-	vertexData[2].position = { +0.5f, -0.5f, 0.0f, 1.0f };
+	vertexData[2].position = { 1.0f, 1.0f, 0.0f, 1.0f };
 	vertexData[2].texcoord = { 1.0f, 1.0f };
 
-	vertexData[3].position = { +0.5f, +0.5f, 0.0f, 1.0f };
+	vertexData[3].position = { 1.0f, 0.0f, 0.0f, 1.0f };
 	vertexData[3].texcoord = { 1.0f, 0.0f };
 
 }

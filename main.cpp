@@ -8,6 +8,8 @@
 
 #include <vector>
 
+#include "TextureManager.h"
+
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
@@ -30,20 +32,32 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	ImGuiManager* imgui_ = ImGuiManager::Create();
 	ImGuiManager::Initialize(winApp_->GetHwnd(), dxCommon_);
 
-	SpriteCommon* spriteCommon_ = nullptr;
-	//スプライトの共通部分の生成と初期化
-	spriteCommon_ = new SpriteCommon;
+	// スプライトコモン
+	SpriteCommon* spriteCommon_ = new SpriteCommon;
 	spriteCommon_->Initialize(dxCommon_);
 
-	//スプライトの生成と初期化
+	// テクスチャマネージャー
+	TextureManager::GetInstance()->Initialize(dxCommon_);
+	TextureManager::GetInstance()->LoadTexture(L"Resources/texture.png");
+	TextureManager::GetInstance()->LoadTexture(L"Resources/mario.jpg");
+
+	// 画像
 	std::vector<Sprite*> sprite_;
 	for (int i = 0; i < 5; i++) {
-		Sprite* temp = new Sprite;
-		temp->Initialize(spriteCommon_);
-		temp->SetPosition({(float)i*1, 0});
+		Sprite* temp = new Sprite();
+		if (i % 2 == 0)
+		{
+			temp->Initialize(spriteCommon_, L"Resources/mario.jpg");
+		}
+		else if (i % 2 == 1)
+		{
+			temp->Initialize(spriteCommon_, L"Resources/texture.png");
+		}
+
+		temp->SetPosition({ (float)i * 120, 0 });
 		sprite_.push_back(temp);
 	}
-	
+
 	// ゲームループ
 	while (true) {
 		if (winApp_->Update() == true) {
@@ -97,20 +111,22 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		dxCommon_->PosDraw();
 	}
 
-	delete input_;
-
-	winApp_->Finalize();
-	delete winApp_;
-
-	delete dxCommon_;
-
-	delete spriteCommon_;
-
 	for (int i = 0; i < 5; i++) {
 		delete sprite_[i];
 	}
 
+	TextureManager::GetInstance()->Finalize();
+
+	delete spriteCommon_;
+
 	delete imgui_;
+
+	delete input_;
+
+	delete dxCommon_;
+
+	winApp_->Finalize();
+	delete winApp_;
 
 	return 0;
 }
